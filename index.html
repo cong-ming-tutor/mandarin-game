@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Belajar Mandarin Woi🐾</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <h1>🐾 Belajar Mandarin Yuk 🐾</h1>
+            <div class="score-board">
+                <div class="score">Skor: <span id="score">0</span></div>
+                <div class="level">Level: <span id="level">1</span></div>
+                <button class="tts-toggle" id="ttsToggle" title="TTS Aktif">🔊</button>
+            </div>
+        </header>
+
+        <div class="menu-screen" id="menuScreen">
+            <div class="menu-content">
+                
+                <!-- Collected Animals Display -->
+                <div class="collected-animals-section" id="collectedAnimalsSection">
+                    <h3>Koleksi Hewan Kamu 🏆</h3>
+                    <div class="canvas-container">
+                        <canvas id="animalsCanvas" width="800" height="150"></canvas>
+                        <div class="no-animals-message" id="noAnimalsMessage" style="display: none;">
+                            Mainkan game untuk mengumpulkan hewan lucu! 🎮
+                        </div>
+                    </div>
+                </div>
+                
+                <h2>Yuk dipilih!</h2>
+                <div class="game-modes">
+                    <button class="game-mode-btn" data-mode="matching">
+                        🎯 Mencocokkan Kata
+                        <span>Cocokkan karakter Mandarin dengan artinya</span>
+                    </button>
+                    <button class="game-mode-btn" data-mode="quiz">
+                        🧠 Tantangan Kuis
+                        <span>Uji pengetahuan Anda dengan pilihan ganda</span>
+                    </button>
+                    <button class="game-mode-btn" data-mode="memory">
+                        🃏 Permainan Memori
+                        <span>Temukan pasangan kata yang cocok</span>
+                    </button>
+                    <button class="game-mode-btn" data-mode="typing">
+                        ⌨️ Latihan Mengetik
+                        <span>Ketik pinyin untuk karakter Mandarin</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-screen" id="gameScreen" style="display: none;">
+            <div class="game-header-info">
+                <button class="back-btn" id="backBtn">← Kembali ke Menu</button>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="game-controls">
+                    <div class="lives">
+                        <span id="livesCount">❤️❤️❤️</span>
+                    </div>
+                    <button class="tts-toggle" id="ttsToggleGame" title="TTS Aktif">🔊</button>
+                </div>
+            </div>
+
+            <div class="game-content" id="gameContent">
+                <!-- Game content will be dynamically generated -->
+            </div>
+
+            <div class="animal-friends">
+                <div class="animal-friend" id="animalFriend">🦫</div>
+                <div class="encouragement" id="encouragement"></div>
+            </div>
+        </div>
+
+        <div class="results-screen" id="resultsScreen" style="display: none;">
+            <div class="results-content">
+                <h2>Kerja Bagus!</h2>
+                <div class="final-animal">🎉</div>
+                <div class="final-score">
+                    <p>Skor Akhir: <span id="finalScore">0</span></p>
+                    <p>Kata yang Dipelajari: <span id="wordsLearned">0</span></p>
+                </div>
+                <div class="results-buttons">
+                    <button class="play-again-btn" id="playAgainBtn">Main Lagi</button>
+                    <button class="menu-btn" id="menuBtn">Kembali ke Menu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
