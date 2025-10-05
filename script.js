@@ -1,26 +1,26 @@
 // Vocabulary data with all provided Mandarin words
 const vocabulary = [
-    { chinese: "规则", pinyin: "guī zé", english: "aturan" },
-    { chinese: "交通", pinyin: "jiāo tōng", english: "lalu lintas" },
-    { chinese: "车祸", pinyin: "chē huò", english: "kecelakaan mobil" },
-    { chinese: "救", pinyin: "jiù", english: "menyelamatkan" },
-    { chinese: "指挥", pinyin: "zhǐ huī", english: "memerintah, mengarahkan" },
-    { chinese: "另", pinyin: "lìng", english: "lain" },
-    { chinese: "巨大", pinyin: "jù dà", english: "sangat besar, raksasa" },
-    { chinese: "照顾", pinyin: "zhào gù", english: "merawat" },
-    { chinese: "到达", pinyin: "dào dá", english: "tiba" },
-    { chinese: "司机", pinyin: "sī jī", english: "sopir" },
-    { chinese: "顺利", pinyin: "shùn lì", english: "dengan lancar" },
-    { chinese: "被困", pinyin: "bèi kùn", english: "terperangkap" },
-    { chinese: "采访", pinyin: "cǎi fǎng", english: "wawancara" },
-    { chinese: "流血", pinyin: "liú xiě", english: "berdarah" },
-    { chinese: "标题", pinyin: "biāo tí", english: "judul" },
-    { chinese: "遵守", pinyin: "zūn shǒu", english: "mematuhi, menaati" },
-    { chinese: "见义勇为", pinyin: "jiàn yì yǒng wéi", english: "bertindak berani untuk tujuan yang benar" },
-    { chinese: "获得", pinyin: "huò dé", english: "mendapatkan, memperoleh" },
-    { chinese: "表扬", pinyin: "biǎo yáng", english: "memuji" },
-    { chinese: "包扎", pinyin: "bāo zā", english: "membalut" },
-    { chinese: "受伤", pinyin: "shòu shāng", english: "terluka" }
+    { chinese: "规则", pinyin: "guī zé", indonesian: "aturan" },
+    { chinese: "交通", pinyin: "jiāo tōng", indonesian: "lalu lintas" },
+    { chinese: "车祸", pinyin: "chē huò", indonesian: "kecelakaan mobil" },
+    { chinese: "救", pinyin: "jiù", indonesian: "menyelamatkan" },
+    { chinese: "指挥", pinyin: "zhǐ huī", indonesian: "memerintah, mengarahkan" },
+    { chinese: "另", pinyin: "lìng", indonesian: "lain" },
+    { chinese: "巨大", pinyin: "jù dà", indonesian: "sangat besar, raksasa" },
+    { chinese: "照顾", pinyin: "zhào gù", indonesian: "merawat" },
+    { chinese: "到达", pinyin: "dào dá", indonesian: "tiba" },
+    { chinese: "司机", pinyin: "sī jī", indonesian: "sopir" },
+    { chinese: "顺利", pinyin: "shùn lì", indonesian: "dengan lancar" },
+    { chinese: "被困", pinyin: "bèi kùn", indonesian: "terperangkap" },
+    { chinese: "采访", pinyin: "cǎi fǎng", indonesian: "wawancara" },
+    { chinese: "流血", pinyin: "liú xiě", indonesian: "berdarah" },
+    { chinese: "标题", pinyin: "biāo tí", indonesian: "judul" },
+    { chinese: "遵守", pinyin: "zūn shǒu", indonesian: "mematuhi, menaati" },
+    { chinese: "见义勇为", pinyin: "jiàn yì yǒng wéi", indonesian: "bertindak berani untuk tujuan yang benar" },
+    { chinese: "获得", pinyin: "huò dé", indonesian: "mendapatkan, memperoleh" },
+    { chinese: "表扬", pinyin: "biǎo yáng", indonesian: "memuji" },
+    { chinese: "包扎", pinyin: "bāo zā", indonesian: "membalut" },
+    { chinese: "受伤", pinyin: "shòu shāng", indonesian: "terluka" }
 ];
 
 const encouragements = [
@@ -358,11 +358,11 @@ function initMatchingGame() {
 
 function createMatchingInterface() {
     const chineseWords = [...gameState.gameWords];
-    const englishWords = [...gameState.gameWords];
+    const indonesianWords = [...gameState.gameWords];
     
     // Acak array
     shuffleArray(chineseWords);
-    shuffleArray(englishWords);
+    shuffleArray(indonesianWords);
     
     gameContent.innerHTML = `
         <div class="matching-container">
@@ -375,11 +375,11 @@ function createMatchingInterface() {
                     </div>`
                 ).join('')}
             </div>
-            <div class="word-column" id="englishColumn">
+            <div class="word-column" id="indonesianColumn">
                 <h3>Arti dalam Bahasa Indonesia</h3>
-                ${englishWords.map((word, index) => 
-                    `<div class="word-card" data-type="english" data-word="${word.english}" data-index="${index}">
-                        ${word.english}
+                ${indonesianWords.map((word, index) => 
+                    `<div class="word-card" data-type="indonesian" data-word="${word.indonesian}" data-index="${index}">
+                        ${word.indonesian}
                     </div>`
                 ).join('')}
             </div>
@@ -426,11 +426,11 @@ function handleMatchingCardClick(event) {
 
 function checkMatch() {
     const chineseWord = gameState.selectedWords[0];
-    const englishWord = gameState.selectedWords[1];
+    const indonesianWord = gameState.selectedWords[1];
     
     // Find the matching word object
     const matchingWord = vocabulary.find(word => 
-        word.chinese === chineseWord && word.english === englishWord
+        word.chinese === chineseWord && word.indonesian === indonesianWord
     );
     
     const selectedCards = document.querySelectorAll('.word-card.selected');
@@ -512,8 +512,8 @@ function showQuizQuestion() {
             </div>
             <div class="quiz-options">
                 ${allOptions.map((option, index) => 
-                    `<button class="quiz-option" data-answer="${option.english}" data-correct="${option.english === currentWord.english}">
-                        ${option.english}
+                    `<button class="quiz-option" data-answer="${option.indonesian}" data-correct="${option.indonesian === currentWord.indonesian}">
+                        ${option.indonesian}
                     </button>`
                 ).join('')}
             </div>
@@ -585,7 +585,7 @@ function createMemoryGrid() {
     const cards = [];
     gameState.gameWords.slice(0, gameState.totalQuestions).forEach(word => {
         cards.push({ type: 'chinese', content: word.chinese, word: word });
-        cards.push({ type: 'english', content: word.english, word: word });
+        cards.push({ type: 'indonesian', content: word.indonesian, word: word });
     });
     
     shuffleArray(cards);
@@ -690,7 +690,7 @@ function showTypingQuestion() {
         <div class="typing-container">
             <div class="character-display">
                 <div style="font-size: 3rem; margin-bottom: 15px;">${currentWord.chinese}</div>
-                <div style="font-size: 1.2rem; opacity: 0.7;">${currentWord.english}</div>
+                <div style="font-size: 1.2rem; opacity: 0.7;">${currentWord.indonesian}</div>
                 <button class="tts-button" onclick="ttsSystem.playSound('${currentWord.chinese}')" title="Dengarkan pengucapan">🔊 Dengarkan</button>
             </div>
             <input type="text" class="typing-input" placeholder="Ketik pinyin..." autocomplete="off" id="typingInput">
