@@ -52,6 +52,11 @@ if (!window.collectedCharacters) {
     window.collectedCharacters = JSON.parse(localStorage.getItem('collectedCharacters') || '[]');
 }
 
+// Global selected characters for display (max 5)
+if (!window.selectedCharacters) {
+    window.selectedCharacters = JSON.parse(localStorage.getItem('selectedCharacters') || '[]');
+}
+
 // TTS system
 const ttsSystem = {
     enabled: true,
@@ -481,6 +486,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof initCharacterAnimation === 'function') {
         initCharacterAnimation();
     }
+    
+    // Initialize character picker button if needed
+    setTimeout(() => {
+        updateCharacterPickerButton();
+    }, 300);
 });
 
 function initializeEventListeners() {
@@ -545,6 +555,11 @@ function showMenu() {
             initCharacterAnimation();
         }, 100);
     }
+    
+    // Update character picker button visibility
+    setTimeout(() => {
+        updateCharacterPickerButton();
+    }, 200);
 }
 
 function startGame(mode) {
@@ -1200,6 +1215,226 @@ function animateWalkingAnimal(element) {
             clearInterval(moveInterval);
         }
     }, 50);
+}
+
+// Character Picker System
+const characterPicker = {
+    isOpen: false,
+    
+    open() {
+        if (this.isOpen) return;
+        this.isOpen = true;
+        
+        const overlay = this.createPickerUI();
+        document.body.appendChild(overlay);
+        
+        // Play click sound
+        if (window.soundSystem) {
+            window.soundSystem.play('click');
+        }
+    },
+    
+    createPickerUI() {
+        const overlay = document.createElement('div');
+        overlay.className = 'character-picker-overlay';
+        overlay.id = 'characterPickerOverlay';
+        
+        const totalCharacters = window.collectedCharacters.length;
+        const selectedIds = window.selectedCharacters.map(c => c.id);
+        
+        const popup = document.createElement('div');
+        popup.className = 'character-picker-popup';
+        popup.innerHTML = `
+            <div class="character-picker-header">
+                <h2>🎨 Pilih 5 Hewan untuk Ditampilkan 🎨</h2>
+                <p>Pilih karakter favorit kamu! (<span id="selectedCount">${selectedIds.length}</span>/5)</p>
+                <button class="picker-close-btn" onclick="characterPicker.close()">✕</button>
+            </div>
+            <div class="character-picker-grid" id="characterPickerGrid">
+                ${this.renderCharacterGrid()}
+            </div>
+            <div class="character-picker-footer">
+                <button class="picker-save-btn" id="pickerSaveBtn" onclick="characterPicker.save()">
+                    Simpan Pilihan
+                </button>
+            </div>
+        `;
+        
+        overlay.appendChild(popup);
+        
+        // Add click handlers to character cards
+        setTimeout(() => {
+            document.querySelectorAll('.picker-character-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const characterId = card.getAttribute('data-character-id');
+                    this.toggleCharacter(characterId, card);
+                });
+            });
+            
+            this.updateSaveButton();
+        }, 100);
+        
+        return overlay;
+    },
+    
+    renderCharacterGrid() {
+        const selectedIds = window.selectedCharacters.map(c => c.id);
+        
+        return window.collectedCharacters.map(char => {
+            const isSelected = selectedIds.includes(char.id);
+            const selectedClass = isSelected ? 'selected' : '';
+            
+            return `
+                <div class="picker-character-card ${selectedClass}" data-character-id="${char.id}">
+                    <div class="picker-character-image">
+                        <img src="assets/thumbnails/${char.type}/${char.type.charAt(0).toUpperCase() + char.type.slice(1)}_Character${String(char.number).padStart(2, '0')}_thumbnail.png" alt="${char.displayName || char.id}">
+                    </div>
+                    <div class="picker-character-info">
+                        <h4>${this.getCharacterDisplayName(char)}</h4>
+                    </div>
+                    <div class="picker-character-checkmark">✓</div>
+                </div>
+            `;
+        }).join('');
+    },
+    
+    getCharacterDisplayName(char) {
+        if (char.displayName) return char.displayName;
+        
+        const typeNames = {
+            'bunny': 'Kelinci',
+            'cat': 'Kucing',
+            'panda': 'Panda',
+            'penguin': 'Penguin',
+            'pig': 'Babi'
+        };
+        return `${typeNames[char.type] || char.type} #${char.number}`;
+    },
+    
+    toggleCharacter(characterId, cardElement) {
+        const selectedIds = window.selectedCharacters.map(c => c.id);
+        const isSelected = selectedIds.includes(characterId);
+        
+        if (isSelected) {
+            // Deselect
+            window.selectedCharacters = window.selectedCharacters.filter(c => c.id !== characterId);
+            cardElement.classList.remove('selected');
+            if (window.soundSystem) window.soundSystem.play('click');
+        } else {
+            // Select (if not already at max)
+            if (window.selectedCharacters.length < 5) {
+                const character = window.collectedCharacters.find(c => c.id === characterId);
+                if (character) {
+                    window.selectedCharacters.push(character);
+                    cardElement.classList.add('selected');
+                    if (window.soundSystem) window.soundSystem.play('correct');
+                }
+            } else {
+                // Show warning - already at max
+                this.showMaxWarning();
+                if (window.soundSystem) window.soundSystem.play('incorrect');
+            }
+        }
+        
+        // Update count
+        const countElement = document.getElementById('selectedCount');
+        if (countElement) {
+            countElement.textContent = window.selectedCharacters.length;
+        }
+        
+        this.updateSaveButton();
+    },
+    
+    showMaxWarning() {
+        const warningElement = document.createElement('div');
+        warningElement.className = 'picker-warning';
+        warningElement.textContent = 'Maksimal 5 karakter! Hapus pilihan terlebih dahulu.';
+        
+        const header = document.querySelector('.character-picker-header');
+        if (header) {
+            header.appendChild(warningElement);
+            setTimeout(() => warningElement.remove(), 3000);
+        }
+    },
+    
+    updateSaveButton() {
+        const saveBtn = document.getElementById('pickerSaveBtn');
+        if (saveBtn) {
+            if (window.selectedCharacters.length === 5) {
+                saveBtn.disabled = false;
+                saveBtn.style.opacity = '1';
+            } else {
+                saveBtn.disabled = true;
+                saveBtn.style.opacity = '0.5';
+            }
+        }
+    },
+    
+    save() {
+        if (window.selectedCharacters.length !== 5) {
+            alert('Pilih tepat 5 karakter!');
+            return;
+        }
+        
+        // Save to localStorage
+        localStorage.setItem('selectedCharacters', JSON.stringify(window.selectedCharacters));
+        
+        // Play success sound
+        if (window.soundSystem) {
+            window.soundSystem.play('levelUp');
+        }
+        
+        // Restart character animation to show new selection
+        if (typeof initCharacterAnimation === 'function') {
+            setTimeout(() => {
+                initCharacterAnimation();
+            }, 500);
+        }
+        
+        this.close();
+    },
+    
+    close() {
+        const overlay = document.getElementById('characterPickerOverlay');
+        if (overlay) {
+            overlay.style.animation = 'fadeOut 0.3s ease';
+            setTimeout(() => {
+                overlay.remove();
+                this.isOpen = false;
+            }, 300);
+        }
+    }
+};
+
+// Function to check and show character picker button
+function updateCharacterPickerButton() {
+    const totalCharacters = window.collectedCharacters.length;
+    let pickerButton = document.getElementById('characterPickerButton');
+    
+    if (totalCharacters > 5) {
+        if (!pickerButton) {
+            // Create picker button
+            pickerButton = document.createElement('button');
+            pickerButton.id = 'characterPickerButton';
+            pickerButton.className = 'character-picker-button';
+            pickerButton.innerHTML = '🎨 Pilih Karakter';
+            pickerButton.title = 'Pilih 5 karakter untuk ditampilkan';
+            pickerButton.addEventListener('click', () => {
+                characterPicker.open();
+            });
+            
+            // Insert button after the canvas container
+            const collectedSection = document.getElementById('collectedCharactersSection');
+            if (collectedSection) {
+                collectedSection.appendChild(pickerButton);
+            }
+        }
+        pickerButton.style.display = 'block';
+    } else {
+        if (pickerButton) {
+            pickerButton.style.display = 'none';
+        }
+    }
 }
 
 // Dukungan sentuh untuk perangkat mobile

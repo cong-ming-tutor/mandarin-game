@@ -330,8 +330,26 @@ class CharacterAnimationSystem {
             noCharactersMessage.style.display = 'none';
         }
         
-        // Limit to maximum 5 characters for performance
-        const charactersToShow = window.collectedCharacters.slice(0, 5);
+        // Determine which characters to show
+        let charactersToShow;
+        if (window.collectedCharacters.length > 5) {
+            // User has more than 5 characters
+            if (window.selectedCharacters && window.selectedCharacters.length === 5) {
+                // Use selected characters if user has made a selection
+                charactersToShow = window.selectedCharacters;
+            } else {
+                // Default to first 5 if no selection made
+                charactersToShow = window.collectedCharacters.slice(0, 5);
+                // Initialize selectedCharacters with first 5 for convenience
+                if (!window.selectedCharacters || window.selectedCharacters.length === 0) {
+                    window.selectedCharacters = [...charactersToShow];
+                    localStorage.setItem('selectedCharacters', JSON.stringify(window.selectedCharacters));
+                }
+            }
+        } else {
+            // User has 5 or fewer characters - show all
+            charactersToShow = window.collectedCharacters.slice(0, 5);
+        }
         
         for (let i = 0; i < charactersToShow.length; i++) {
             const collectedChar = charactersToShow[i];

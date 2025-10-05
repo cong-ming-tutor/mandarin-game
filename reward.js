@@ -476,6 +476,10 @@ class RewardSystem {
             if (typeof initCharacterAnimation === 'function' && document.getElementById('menuScreen').style.display !== 'none') {
                 initCharacterAnimation();
             }
+            // Update character picker button visibility
+            if (typeof updateCharacterPickerButton === 'function') {
+                updateCharacterPickerButton();
+            }
         }, 500);
         
         // Add fadeOut animation
