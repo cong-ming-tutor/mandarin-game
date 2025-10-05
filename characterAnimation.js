@@ -12,10 +12,13 @@ class CharacterAnimationSystem {
         this.ctx = this.canvas.getContext('2d');
         this.characters = [];
         this.stones = [];
+        this.fallingRocks = [];
         this.animationFrameId = null;
         this.isRunning = false;
         this.rockImage = null;
         this.rockImageLoaded = false;
+        this.environmentImages = [];
+        this.environmentImagesLoaded = false;
         
         // Sprite configuration
         this.spriteConfig = {
@@ -70,11 +73,8 @@ class CharacterAnimationSystem {
         this.dragOffset = { x: 0, y: 0 };
         this.wasDragging = false; // Track if a drag operation occurred
         
-        // Load rock image
-        // await this.loadRockImage();
-        
-        // Generate random stones
-        // this.generateStones(3);
+        // Load environment images for falling rocks
+        await this.loadEnvironmentImages();
         
         // Create characters from collected characters
         await this.createCollectedCharacters();
@@ -95,7 +95,8 @@ class CharacterAnimationSystem {
         const clickX = event.clientX - rect.left;
         const clickY = event.clientY - rect.top;
         
-        // Check collision with characters
+        // Check if click is on empty space (not on characters)
+        let clickedOnCharacter = false;
         this.characters.forEach(char => {
             if (char.isStunned) return; // Don't stun already stunned characters
             
@@ -109,8 +110,14 @@ class CharacterAnimationSystem {
                 clickY >= charY && clickY <= charY + charHeight) {
                 // Character clicked! Stun this specific character
                 this.stunCharacter(char);
+                clickedOnCharacter = true;
             }
         });
+        
+        // If clicked on empty space, drop a rock
+        if (!clickedOnCharacter) {
+            this.dropRock(clickX);
+        }
     }
     
     // Stun a specific character
@@ -256,22 +263,84 @@ class CharacterAnimationSystem {
         
         this.canvas.style.cursor = overCharacter ? 'grab' : 'default';
     }
+    
+    // Drop a rock from the top at the specified x position
+    dropRock(x) {
+        if (!this.environmentImagesLoaded || this.environmentImages.length === 0) {
+            console.warn('Environment images not loaded yet');
+            return;
+        }
+        
+        // Select a random environment image
+        const randomImage = this.environmentImages[Math.floor(Math.random() * this.environmentImages.length)];
+        
+        // Create falling rock object
+        const rock = {
+            x: x - 15, // Center the rock on the click position
+            y: -30, // Start above the canvas
+            width: 30,
+            height: 30,
+            velocityY: 0,
+            gravity: 0.5,
+            image: randomImage.image,
+            filename: randomImage.filename,
+            rotation: Math.random() * Math.PI * 2, // Random initial rotation
+            rotationSpeed: (Math.random() - 0.5) * 0.2, // Random rotation speed
+            scale: 0.5 + Math.random() * 0.5, // Random scale between 0.5 and 1.0
+            life: 300 // Frames before auto-removal
+        };
+        
+        this.fallingRocks.push(rock);
+        
+        // Play sound effect
+        if (typeof soundSystem !== 'undefined') {
+            soundSystem.play('click');
+        }
+    }
 
-    // Load rock image
-    loadRockImage() {
+    // Load environment images for falling rocks
+    loadEnvironmentImages() {
         return new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => {
-                this.rockImage = img;
-                this.rockImageLoaded = true;
+            const environmentFiles = [
+                'canyon_rock5.png',
+                'cave_rock5.png', 
+                'desert_rock5.png'
+            ];
+            
+            let loadedCount = 0;
+            const totalImages = environmentFiles.length;
+            
+            if (totalImages === 0) {
+                this.environmentImagesLoaded = true;
                 resolve();
-            };
-            img.onerror = () => {
-                console.error('Failed to load rock image');
-                this.rockImageLoaded = false;
-                resolve();
-            };
-            img.src = 'assets/cave_rock5.png';
+                return;
+            }
+            
+            environmentFiles.forEach(filename => {
+                const img = new Image();
+                img.onload = () => {
+                    this.environmentImages.push({
+                        image: img,
+                        filename: filename
+                    });
+                    loadedCount++;
+                    
+                    if (loadedCount === totalImages) {
+                        this.environmentImagesLoaded = true;
+                        resolve();
+                    }
+                };
+                img.onerror = () => {
+                    console.error(`Failed to load environment image: ${filename}`);
+                    loadedCount++;
+                    
+                    if (loadedCount === totalImages) {
+                        this.environmentImagesLoaded = true;
+                        resolve();
+                    }
+                };
+                img.src = `assets/environments/${filename}`;
+            });
         });
     }
     
@@ -282,32 +351,6 @@ class CharacterAnimationSystem {
             this.canvas.width = container.clientWidth || 800;
             this.canvas.height = container.clientHeight || 150;
         }
-    }
-    
-    // Generate random stones on the canvas
-    generateStones(count) {
-        this.stones = [];
-        const canvasWidth = this.canvas.width;
-        const spacing = canvasWidth / (count + 1);
-        
-        for (let i = 0; i < count; i++) {
-            const baseSize = 20 + Math.random() * 10;
-            const stone = {
-                x: spacing * (i + 1) + (Math.random() - 0.5) * 100,
-                y: this.canvas.height - 25, // Ground level
-                width: baseSize,
-                height: baseSize,
-                scale: 0.5
-            };
-            
-            // Make sure stones don't go off screen
-            stone.x = Math.max(50, Math.min(stone.x, canvasWidth - 50));
-            
-            this.stones.push(stone);
-        }
-        
-        // Sort stones by x position for efficient collision detection
-        this.stones.sort((a, b) => a.x - b.x);
     }
     
     // Create characters from collected characters
@@ -518,6 +561,7 @@ class CharacterAnimationSystem {
         this.stop();
         this.characters = [];
         this.stones = [];
+        this.fallingRocks = [];
         this.init();
     }
     
@@ -540,6 +584,10 @@ class CharacterAnimationSystem {
             // Draw stones
             this.drawStones();
             
+            // Update and draw falling rocks
+            this.updateFallingRocks();
+            this.drawFallingRocks();
+            
             // Update and draw characters
             this.updateCharacters();
             this.drawCharacters();
@@ -560,19 +608,6 @@ class CharacterAnimationSystem {
     
     // Draw stones
     drawStones() {
-        if (!this.rockImageLoaded || !this.rockImage) {
-            // Fallback to simple shapes if image not loaded
-            this.stones.forEach(stone => {
-                this.ctx.save();
-                this.ctx.fillStyle = '#666666';
-                this.ctx.beginPath();
-                this.ctx.arc(stone.x + stone.width / 2, stone.y + stone.height / 2, stone.width / 2, 0, Math.PI * 2);
-                this.ctx.fill();
-                this.ctx.restore();
-            });
-            return;
-        }
-        
         this.stones.forEach(stone => {
             this.ctx.save();
             
@@ -581,18 +616,156 @@ class CharacterAnimationSystem {
             this.ctx.shadowBlur = 8;
             this.ctx.shadowOffsetY = 3;
             
-            // Draw rock image
-            const drawWidth = stone.width * stone.scale;
-            const drawHeight = stone.height * stone.scale;
-            const drawX = stone.x - (drawWidth - stone.width) / 2;
-            const drawY = stone.y - (drawHeight - stone.height) / 2;
+            if (stone.image && stone.isPermanent) {
+                // Draw environment image stone (converted from falling rock)
+                this.ctx.translate(stone.x + stone.width / 2, stone.y + stone.height / 2);
+                this.ctx.rotate(stone.rotation);
+                this.ctx.scale(stone.scale, stone.scale);
+                
+                this.ctx.drawImage(
+                    stone.image,
+                    -stone.width / 2,
+                    -stone.height / 2,
+                    stone.width,
+                    stone.height
+                );
+            } else if (this.rockImageLoaded && this.rockImage) {
+                // Draw original rock image for old stones
+                const drawWidth = stone.width * (stone.scale || 1);
+                const drawHeight = stone.height * (stone.scale || 1);
+                const drawX = stone.x - (drawWidth - stone.width) / 2;
+                const drawY = stone.y - (drawHeight - stone.height) / 2;
+                
+                this.ctx.drawImage(
+                    this.rockImage,
+                    drawX,
+                    drawY,
+                    drawWidth,
+                    drawHeight
+                );
+            } else {
+                // Fallback to simple shapes if no image loaded
+                this.ctx.fillStyle = '#666666';
+                this.ctx.beginPath();
+                this.ctx.arc(stone.x + stone.width / 2, stone.y + stone.height / 2, stone.width / 2, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
             
+            this.ctx.restore();
+        });
+    }
+    
+    // Update falling rocks
+    updateFallingRocks() {
+        for (let i = this.fallingRocks.length - 1; i >= 0; i--) {
+            const rock = this.fallingRocks[i];
+            
+            // Apply gravity
+            rock.velocityY += rock.gravity;
+            rock.y += rock.velocityY;
+            
+            // Update rotation
+            rock.rotation += rock.rotationSpeed;
+            
+            // Decrease life
+            rock.life--;
+            
+            // Check if rock hit the ground
+            const groundY = this.canvas.height - 0;
+            if (rock.y + rock.height * rock.scale >= groundY) {
+                // Rock hit the ground - create a small impact effect
+                rock.y = groundY - rock.height * rock.scale;
+                rock.velocityY = 0;
+                
+                // Check for character collisions
+                this.checkRockCharacterCollisions(rock);
+                
+                // Convert falling rock to permanent stone
+                this.convertRockToStone(rock);
+                
+                // Remove the falling rock
+                this.fallingRocks.splice(i, 1);
+            } else if (rock.y > this.canvas.height + 50 || rock.life <= 0) {
+                // Remove rock if it falls off screen or life expires
+                this.fallingRocks.splice(i, 1);
+            }
+        }
+    }
+    
+    // Check for collisions between falling rocks and characters
+    checkRockCharacterCollisions(rock) {
+        this.characters.forEach(char => {
+            if (char.isStunned) return; // Don't stun already stunned characters
+            
+            const charWidth = this.spriteConfig.frameWidth * char.scale;
+            const charHeight = this.spriteConfig.frameHeight * char.scale;
+            const charX = char.x;
+            const charY = char.y + char.jumpHeight;
+            
+            const rockWidth = rock.width * rock.scale;
+            const rockHeight = rock.height * rock.scale;
+            
+            // Check collision
+            if (rock.x < charX + charWidth &&
+                rock.x + rockWidth > charX &&
+                rock.y < charY + charHeight &&
+                rock.y + rockHeight > charY) {
+                
+                // Rock hit character - stun the character
+                this.stunCharacter(char);
+                
+                // Add a small bounce to the rock
+                rock.velocityY = -2;
+            }
+        });
+    }
+    
+    // Convert a falling rock to a permanent stone
+    convertRockToStone(rock) {
+        const stone = {
+            x: rock.x,
+            y: this.canvas.height - 20, // Ground level
+            width: rock.width * rock.scale,
+            height: rock.height * rock.scale,
+            scale: rock.scale,
+            image: rock.image,
+            filename: rock.filename,
+            rotation: rock.rotation,
+            // Stone properties
+            isPermanent: true,
+            id: Date.now() + Math.random() // Unique ID for this stone
+        };
+        
+        this.stones.push(stone);
+        
+        // Play a different sound for stone landing
+        if (typeof soundSystem !== 'undefined') {
+            soundSystem.play('correct'); // Use a more satisfying sound for stone landing
+        }
+    }
+    
+    // Draw falling rocks
+    drawFallingRocks() {
+        this.fallingRocks.forEach(rock => {
+            this.ctx.save();
+            
+            // Apply rotation and scaling
+            this.ctx.translate(rock.x + rock.width * rock.scale / 2, rock.y + rock.height * rock.scale / 2);
+            this.ctx.rotate(rock.rotation);
+            this.ctx.scale(rock.scale, rock.scale);
+            
+            // Draw shadow
+            this.ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            this.ctx.shadowBlur = 8;
+            this.ctx.shadowOffsetY = 3;
+            
+            // Draw rock image
             this.ctx.drawImage(
-                this.rockImage,
-                drawX,
-                drawY,
-                drawWidth,
-                drawHeight
+                rock.image,
+                -rock.width / 2,
+                -rock.height / 2,
+                rock.width,
+                rock.height
             );
             
             this.ctx.restore();
