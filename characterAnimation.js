@@ -286,7 +286,7 @@ class CharacterAnimationSystem {
             filename: randomImage.filename,
             rotation: Math.random() * Math.PI * 2, // Random initial rotation
             rotationSpeed: (Math.random() - 0.5) * 0.2, // Random rotation speed
-            scale: 0.5 + Math.random() * 0.5, // Random scale between 0.5 and 1.0
+            scale: 0.7,
             life: 300 // Frames before auto-removal
         };
         
@@ -722,6 +722,11 @@ class CharacterAnimationSystem {
     
     // Convert a falling rock to a permanent stone
     convertRockToStone(rock) {
+        // Limit to maximum 3 stones - remove oldest if we're at the limit
+        if (this.stones.length >= 3) {
+            this.stones.shift(); // Remove the first (oldest) stone
+        }
+        
         const stone = {
             x: rock.x,
             y: this.canvas.height - 20, // Ground level
