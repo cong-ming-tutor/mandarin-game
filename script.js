@@ -1,27 +1,39 @@
 // Vocabulary data with all provided Mandarin words
 const vocabulary = [
-    { chinese: "规则", pinyin: "guī zé", indonesian: "aturan" },
-    { chinese: "交通", pinyin: "jiāo tōng", indonesian: "lalu lintas" },
-    { chinese: "车祸", pinyin: "chē huò", indonesian: "kecelakaan mobil" },
-    { chinese: "救", pinyin: "jiù", indonesian: "menyelamatkan" },
-    { chinese: "指挥", pinyin: "zhǐ huī", indonesian: "memerintah, mengarahkan" },
-    { chinese: "另", pinyin: "lìng", indonesian: "lain" },
-    { chinese: "巨大", pinyin: "jù dà", indonesian: "sangat besar, raksasa" },
-    { chinese: "照顾", pinyin: "zhào gù", indonesian: "merawat" },
-    { chinese: "到达", pinyin: "dào dá", indonesian: "tiba" },
-    { chinese: "司机", pinyin: "sī jī", indonesian: "sopir" },
-    { chinese: "顺利", pinyin: "shùn lì", indonesian: "dengan lancar" },
-    { chinese: "被困", pinyin: "bèi kùn", indonesian: "terperangkap" },
-    { chinese: "采访", pinyin: "cǎi fǎng", indonesian: "wawancara" },
-    { chinese: "流血", pinyin: "liú xiě", indonesian: "berdarah" },
-    { chinese: "标题", pinyin: "biāo tí", indonesian: "judul" },
-    { chinese: "遵守", pinyin: "zūn shǒu", indonesian: "mematuhi, menaati" },
-    { chinese: "见义勇为", pinyin: "jiàn yì yǒng wéi", indonesian: "bertindak berani untuk tujuan yang benar" },
-    { chinese: "获得", pinyin: "huò dé", indonesian: "mendapatkan, memperoleh" },
-    { chinese: "表扬", pinyin: "biǎo yáng", indonesian: "memuji" },
-    { chinese: "包扎", pinyin: "bāo zā", indonesian: "membalut" },
-    { chinese: "受伤", pinyin: "shòu shāng", indonesian: "terluka" }
-];
+    { chinese: "盲人", pinyin: "máng rén", indonesian: "orang buta" },
+    { chinese: "熟食", pinyin: "shú shí", indonesian: "makanan matang" },
+    { chinese: "提供", pinyin: "tí gōng", indonesian: "menyediakan" },
+    { chinese: "水沟", pinyin: "shuǐ gōu", indonesian: "selokan" },
+    { chinese: "清理", pinyin: "qīng lǐ", indonesian: "membersihkan" },
+    { chinese: "饮料", pinyin: "yǐn liào", indonesian: "minuman" },
+    { chinese: "摊位", pinyin: "tān wèi", indonesian: "lapak, stan" },
+    { chinese: "糖果", pinyin: "táng guǒ", indonesian: "permen" },
+    { chinese: "讨厌", pinyin: "tǎo yàn", indonesian: "benci, tidak suka" },
+    { chinese: "一般", pinyin: "yī bān", indonesian: "biasa, umumnya" },
+    { chinese: "辣味", pinyin: "là wèi", indonesian: "rasa pedas" },
+    { chinese: "橙汁", pinyin: "chéng zhī", indonesian: "jus jeruk" },
+    { chinese: "告示牌", pinyin: "gào shì pái", indonesian: "papan pengumuman" },
+    { chinese: "依然", pinyin: "yī rán", indonesian: "masih, tetap" },
+    { chinese: "笨", pinyin: "bèn", indonesian: "bodoh" },
+    { chinese: "而是", pinyin: "ér shì", indonesian: "melainkan" },
+    { chinese: "居民", pinyin: "jū mín", indonesian: "penduduk, warga" },
+    { chinese: "地铁", pinyin: "dì tiě", indonesian: "kereta bawah tanah" },
+    { chinese: "座位", pinyin: "zuò wèi", indonesian: "tempat duduk" },
+    { chinese: "店", pinyin: "diàn", indonesian: "toko" },
+    { chinese: "口味", pinyin: "kǒu wèi", indonesian: "selera rasa" },
+    { chinese: "其中", pinyin: "qí zhōng", indonesian: "di antaranya" },
+    { chinese: "清楚", pinyin: "qīng chǔ", indonesian: "jelas" },
+    { chinese: "离开", pinyin: "lí kāi", indonesian: "meninggalkan" },
+    { chinese: "无障碍", pinyin: "wú zhàng ài", indonesian: "tanpa hambatan, aksesibel" },
+    { chinese: "轮椅", pinyin: "lún yǐ", indonesian: "kursi roda" },
+    { chinese: "梯级", pinyin: "tī jí", indonesian: "anak tangga" },
+    { chinese: "坡道", pinyin: "pō dào", indonesian: "jalan miring, tanjakan" },
+    { chinese: "设施", pinyin: "shè shī", indonesian: "fasilitas" },
+    { chinese: "闸门", pinyin: "zhá mén", indonesian: "pintu gerbang" },
+    { chinese: "月台", pinyin: "yuè tái", indonesian: "peron" },
+    { chinese: "等候区", pinyin: "děng hòu qū", indonesian: "area tunggu" }
+  ]
+  ;
 
 const encouragements = [
     "Mantap! 🎉",
@@ -485,6 +497,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize character animations on canvas
     if (typeof initCharacterAnimation === 'function') {
         initCharacterAnimation();
+    } else {
+        // If function not available yet, wait a bit and try again
+        setTimeout(() => {
+            if (typeof initCharacterAnimation === 'function') {
+                initCharacterAnimation();
+            } else {
+                console.warn('initCharacterAnimation function not available');
+            }
+        }, 100);
     }
     
     // Initialize character picker button if needed
@@ -554,6 +575,13 @@ function showMenu() {
         setTimeout(() => {
             initCharacterAnimation();
         }, 100);
+    } else {
+        // If function not available, wait and try again
+        setTimeout(() => {
+            if (typeof initCharacterAnimation === 'function') {
+                initCharacterAnimation();
+            }
+        }, 200);
     }
     
     // Update character picker button visibility

@@ -1012,6 +1012,28 @@ function initCharacterAnimation() {
     characterAnimSystem.init();
 }
 
+// Make sure the function is available globally immediately
+window.initCharacterAnimation = initCharacterAnimation;
+
+// Also try to initialize immediately if DOM is already ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        // Small delay to ensure other scripts have loaded
+        setTimeout(() => {
+            if (typeof window.initCharacterAnimation === 'function') {
+                window.initCharacterAnimation();
+            }
+        }, 50);
+    });
+} else {
+    // DOM is already ready, initialize immediately
+    setTimeout(() => {
+        if (typeof window.initCharacterAnimation === 'function') {
+            window.initCharacterAnimation();
+        }
+    }, 50);
+}
+
 // Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { CharacterAnimationSystem, initCharacterAnimation };
