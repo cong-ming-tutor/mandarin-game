@@ -21,7 +21,17 @@
         <div class="menu-screen" id="menuScreen">
             <div class="menu-content">
                 
-                
+                <!-- Collected Characters Display -->
+                <div class="collected-characters-section" id="collectedCharactersSection">
+                    <h3>Koleksi Hewan Kamu 🏆</h3>
+                    <div class="canvas-container">
+                        <canvas id="charactersCanvas" width="800" height="150"></canvas>
+                        <div class="no-characters-message" id="noCharactersMessage" style="display: none;">
+                            Mainkan game untuk mengumpulkan hewan lucu! 🎮
+                        </div>
+                    </div>
+                </div>
+
                 <h2>Yuk dipilih!</h2>
                 <div class="game-modes">
                     <button class="game-mode-btn" data-mode="matching">
@@ -84,6 +94,7 @@
         </div>
     </div>
 
+    <script src="characterAnimation.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

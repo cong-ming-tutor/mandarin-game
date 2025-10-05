@@ -10,15 +10,38 @@ An interactive web-based game for learning Mandarin Chinese vocabulary with cute
 - **Memory Game**: Find matching pairs of Chinese characters and English words
 - **Typing Practice**: Type the correct pinyin pronunciation
 
-### 🦫 Cute Animal Friends
-Features adorable animals including:
-- Capybara 🦫
-- Sea Otter 🦦
-- Elephant 🐘
-- Penguin 🐧
-- Panda 🐼
-- Koala 🐨
-- And more!
+### 🐱 Cute Animal Friends
+Features adorable animals with personalities including:
+🐰 Bunny Characters
+Very Energetic (0.8-1.0): Fast movement, frequent activity
+Very Curious (0.7-1.0): Often change direction, explore
+Very Playful (0.8-1.0): Jump frequently, bouncy behavior
+Impatient (0.2-0.5): Short idle periods, quick to resume activity
+Quite Bold (0.6-0.9): Take risks, high jumps
+🐧 Penguin Characters
+Low Energy (0.3-0.6): Slower, more deliberate movement
+Moderate Curiosity (0.4-0.7): Occasional direction changes
+Moderate Playfulness (0.3-0.7): Balanced jumping behavior
+Very Patient (0.7-1.0): Long idle periods, calm demeanor
+Very Bold (0.8-1.0): Determined, confident movement
+🐱 Cat Characters
+Moderate Energy (0.4-0.8): Balanced activity level
+Moderate Curiosity (0.5-0.8): Some exploration behavior
+Selective Playfulness (0.3-0.7): Jump when they feel like it
+Patient (0.6-0.9): Independent, calm periods
+Moderate Boldness (0.4-0.8): Calculated risks
+🐷 Pig Characters
+High Energy (0.7-0.9): Active, social movement
+Curious (0.6-0.9): Explore and investigate
+Very Playful (0.7-0.9): Frequent jumping and activity
+Moderate Patience (0.3-0.7): Social, not too patient
+Moderate Boldness (0.5-0.8): Friendly, approachable
+🐼 Panda Characters
+Low Energy (0.2-0.5): Calm, peaceful movement
+Low Curiosity (0.3-0.6): Minimal direction changes
+Low Playfulness (0.2-0.5): Rare jumping, gentle behavior
+Very Patient (0.8-1.0): Long idle periods, zen-like
+Low Boldness (0.3-0.6): Cautious, peaceful approach
 
 ### 📱 Mobile & PC Compatible
 - Fully responsive design

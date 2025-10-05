@@ -23,130 +23,6 @@ const vocabulary = [
     { chinese: "受伤", pinyin: "shòu shāng", english: "terluka" }
 ];
 
-// Cute animal characters with sprite sheet properties
-const animals = {
-    beaver: { 
-        name: "Berang-berang", 
-        color: "#8B7355", 
-        sprite: "beaver.png",
-        frameWidth: 64,
-        frameHeight: 64,
-        frames: 12, // 3 rows × 4 frames = 12 total frames
-        fps: 8,
-        // Animation frame mappings for different actions
-        animations: {
-            walk: { startFrame: 0, frameCount: 4 },    // Row 1: frames 0-3
-            jump: { startFrame: 4, frameCount: 4 },    // Row 2: frames 4-7  
-            sleep: { startFrame: 8, frameCount: 4 }    // Row 3: frames 8-11
-        }
-    },
-    seaOtter: { 
-        name: "Berang-berang Laut", 
-        color: "#8B6331", 
-        sprite: "sea_otter.png",
-        frameWidth: 64,
-        frameHeight: 64,
-        frames: 12, // 3 rows × 4 frames = 12 total frames
-        fps: 6,
-        // Animation frame mappings for different actions
-        animations: {
-            walk: { startFrame: 0, frameCount: 4 },    // Row 1: frames 0-3
-            jump: { startFrame: 4, frameCount: 4 },    // Row 2: frames 4-7  
-            sleep: { startFrame: 8, frameCount: 4 }    // Row 3: frames 8-11
-        }
-    },
-    elephant: { 
-        name: "Gajah", 
-        color: "#808080", 
-        sprite: "elephant.png",
-        frameWidth: 240,
-        frameHeight: 240,
-        frames: 12, // 3 rows × 4 frames = 12 total frames
-        fps: 2,
-        // Animation frame mappings for different actions
-        animations: {
-            walk: { startFrame: 0, frameCount: 4 },    // Row 1: frames 0-3
-            jump: { startFrame: 4, frameCount: 4 },    // Row 2: frames 4-7  
-            sleep: { startFrame: 8, frameCount: 4 }    // Row 3: frames 8-11
-        }
-    },
-    penguin: { 
-        name: "Penguin", 
-        color: "#2C3E50", 
-        sprite: "penguin.png",
-        frameWidth: 64,
-        frameHeight: 64,
-        frames: 12, // 3 rows × 4 frames = 12 total frames
-        fps: 10,
-        // Animation frame mappings for different actions
-        animations: {
-            walk: { startFrame: 0, frameCount: 4 },    // Row 1: frames 0-3
-            jump: { startFrame: 4, frameCount: 4 },    // Row 2: frames 4-7  
-            sleep: { startFrame: 8, frameCount: 4 }    // Row 3: frames 8-11
-        }
-    },
-    panda: { 
-        name: "Panda", 
-        color: "#000000", 
-        sprite: "panda.png",
-        frameWidth: 64,
-        frameHeight: 64,
-        frames: 12, // 3 rows × 4 frames = 12 total frames
-        fps: 7,
-        // Animation frame mappings for different actions
-        animations: {
-            walk: { startFrame: 0, frameCount: 4 },    // Row 1: frames 0-3
-            jump: { startFrame: 4, frameCount: 4 },    // Row 2: frames 4-7  
-            sleep: { startFrame: 8, frameCount: 4 }    // Row 3: frames 8-11
-        }
-    },
-    koala: { 
-        name: "Koala", 
-        color: "#696969", 
-        sprite: "koala.png",
-        frameWidth: 187,
-        frameHeight: 187,
-        frames: 12, // 3 rows × 4 frames = 12 total frames
-        fps: 6,
-        // Animation frame mappings for different actions
-        animations: {
-            walk: { startFrame: 0, frameCount: 4 },    // Row 1: frames 0-3
-            jump: { startFrame: 4, frameCount: 4 },    // Row 2: frames 4-7  
-            sleep: { startFrame: 8, frameCount: 4 }    // Row 3: frames 8-11
-        }
-    },
-    hamster: { 
-        name: "Hamster", 
-        color: "#D2691E", 
-        sprite: "hamster.png",
-        frameWidth: 64,
-        frameHeight: 64,
-        frames: 12, // 3 rows × 4 frames = 12 total frames
-        fps: 12,
-        // Animation frame mappings for different actions
-        animations: {
-            walk: { startFrame: 0, frameCount: 4 },    // Row 1: frames 0-3
-            jump: { startFrame: 4, frameCount: 4 },    // Row 2: frames 4-7  
-            sleep: { startFrame: 8, frameCount: 4 }    // Row 3: frames 8-11
-        }
-    },
-    rabbit: { 
-        name: "Kelinci", 
-        color: "#FFC0CB", 
-        sprite: "rabbit.png",
-        frameWidth: 64,
-        frameHeight: 64,
-        frames: 12, // 3 rows × 4 frames = 12 total frames
-        fps: 9,
-        // Animation frame mappings for different actions
-        animations: {
-            walk: { startFrame: 0, frameCount: 4 },    // Row 1: frames 0-3
-            jump: { startFrame: 4, frameCount: 4 },    // Row 2: frames 4-7  
-            sleep: { startFrame: 8, frameCount: 4 }    // Row 3: frames 8-11
-        }
-    }
-};
-
 const encouragements = [
     "Mantap! 🎉",
     "Hebat! ⭐",
@@ -320,8 +196,6 @@ const soundSystem = {
     }
 };
 
-// Canvas animation and collected animals system removed
-
 // DOM elements
 const menuScreen = document.getElementById('menuScreen');
 const gameScreen = document.getElementById('gameScreen');
@@ -342,8 +216,12 @@ document.addEventListener('DOMContentLoaded', function() {
     soundSystem.init();
     ttsSystem.initTTS();
     initializeEventListeners();
-    showRandomAnimal();
+    showRandomEmoji();
     
+    // Initialize character animations on canvas
+    if (typeof initCharacterAnimation === 'function') {
+        initCharacterAnimation();
+    }
 });
 
 function initializeEventListeners() {
@@ -400,7 +278,14 @@ function showMenu() {
     gameScreen.style.display = 'none';
     resultsScreen.style.display = 'none';
     resetGameState();
-    showRandomAnimal();
+    showRandomEmoji();
+    
+    // Restart character animation when returning to menu
+    if (typeof initCharacterAnimation === 'function') {
+        setTimeout(() => {
+            initCharacterAnimation();
+        }, 100);
+    }
 }
 
 function startGame(mode) {
@@ -449,11 +334,7 @@ function updateUI() {
     progressFill.style.width = progress + '%';
 }
 
-function showRandomAnimal() {
-    const animalKeys = Object.keys(animals);
-    const randomKey = animalKeys[Math.floor(Math.random() * animalKeys.length)];
-    const randomAnimal = animals[randomKey];
-    // Use a generic animal emoji since we don't have individual emojis anymore
+function showRandomEmoji() {
     const animalEmojis = ["🦫", "🦦", "🐘", "🐧", "🐼", "🐨", "🐹", "🐰"];
     const randomEmoji = animalEmojis[Math.floor(Math.random() * animalEmojis.length)];
     animalFriend.textContent = randomEmoji;
@@ -566,7 +447,7 @@ function checkMatch() {
         gameState.score += 10;
         gameState.correctAnswers++;
         showEncouragement();
-        showRandomAnimal();
+        showRandomEmoji();
     } else {
         // Incorrect match
         soundSystem.play('incorrect');
@@ -670,7 +551,7 @@ function handleQuizAnswer(event) {
         gameState.score += 10;
         gameState.correctAnswers++;
         showEncouragement();
-        showRandomAnimal();
+        showRandomEmoji();
     } else {
         soundSystem.play('incorrect');
         gameState.lives--;
@@ -763,7 +644,7 @@ function checkMemoryMatch() {
         gameState.score += 15;
         gameState.matchedPairs++;
         showEncouragement();
-        showRandomAnimal();
+        showRandomEmoji();
         
         if (gameState.matchedPairs === gameState.totalQuestions) {
             setTimeout(endGame, 1500);
@@ -850,7 +731,7 @@ function checkTypingAnswer() {
         gameState.correctAnswers++;
         input.style.background = 'linear-gradient(145deg, #a8edea 0%, #fed6e3 100%)';
         showEncouragement();
-        showRandomAnimal();
+        showRandomEmoji();
     } else {
         soundSystem.play('incorrect');
         gameState.lives--;
