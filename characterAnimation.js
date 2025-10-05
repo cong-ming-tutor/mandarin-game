@@ -17,6 +17,14 @@ class CharacterAnimationSystem {
         this.rockImage = null;
         this.rockImageLoaded = false;
         
+        // Rain system
+        this.isRaining = false;
+        this.rainParticles = [];
+        this.rainTimer = 0;
+        this.rainDuration = 0;
+        this.nextRainCheck = 300; // Check for rain every 5 seconds at 60fps
+        this.rainIntensity = 100; // Number of rain drops
+        
         // Sprite configuration
         this.spriteConfig = {
             frameWidth: 128,
@@ -502,9 +510,18 @@ class CharacterAnimationSystem {
             // Draw stones
             this.drawStones();
             
+            // Check for rain events
+            this.checkRainEvent();
+            
+            // Update rain particles
+            this.updateRain();
+            
             // Update and draw characters
             this.updateCharacters();
             this.drawCharacters();
+            
+            // Draw rain on top of everything
+            this.drawRain();
         }
         
         this.animationFrameId = requestAnimationFrame((time) => this.animate(time));
@@ -518,6 +535,198 @@ class CharacterAnimationSystem {
         this.ctx.moveTo(0, this.canvas.height - 60);
         this.ctx.lineTo(this.canvas.width, this.canvas.height - 60);
         this.ctx.stroke();
+    }
+    
+    // Initialize rain particles
+    initRain() {
+        this.rainParticles = [];
+        for (let i = 0; i < this.rainIntensity; i++) {
+            this.rainParticles.push({
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height - this.canvas.height,
+                length: 10 + Math.random() * 20,
+                speed: 8 + Math.random() * 4,
+                opacity: 0.1 + Math.random() * 0.3,
+                width: 1 + Math.random() * 2
+            });
+        }
+    }
+    
+    // Update rain particles
+    updateRain() {
+        if (!this.isRaining) return;
+        
+        this.rainParticles.forEach(particle => {
+            particle.y += particle.speed;
+            
+            // Reset particle when it goes off screen
+            if (particle.y > this.canvas.height) {
+                particle.y = -particle.length;
+                particle.x = Math.random() * this.canvas.width;
+            }
+        });
+    }
+    
+    // Draw rain
+    drawRain() {
+        if (!this.isRaining) return;
+        
+        this.ctx.save();
+        
+        this.rainParticles.forEach(particle => {
+            // Create gradient for rain drop
+            const gradient = this.ctx.createLinearGradient(
+                particle.x, particle.y,
+                particle.x, particle.y + particle.length
+            );
+            gradient.addColorStop(0, `rgba(255, 255, 255, 0)`);
+            gradient.addColorStop(0.5, `rgba(255, 255, 255, ${particle.opacity})`);
+            gradient.addColorStop(1, `rgba(255, 255, 255, 0)`);
+            
+            this.ctx.strokeStyle = gradient;
+            this.ctx.lineWidth = particle.width;
+            this.ctx.lineCap = 'round';
+            
+            this.ctx.beginPath();
+            this.ctx.moveTo(particle.x, particle.y);
+            this.ctx.lineTo(particle.x, particle.y + particle.length);
+            this.ctx.stroke();
+        });
+        
+        // Add rain atmosphere overlay
+        this.ctx.fillStyle = 'rgba(100, 100, 150, 0.1)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        this.ctx.restore();
+    }
+    
+    // Check and handle rain events
+    checkRainEvent() {
+        this.rainTimer++;
+        
+        // Check for new rain event
+        if (!this.isRaining && this.rainTimer >= this.nextRainCheck) {
+            // Rare chance of rain (3% chance every 5 seconds)
+            if (Math.random() < 0.03) {
+                this.startRain();
+            }
+            this.rainTimer = 0;
+            // Randomize next check time (5-15 seconds)
+            this.nextRainCheck = 300 + Math.floor(Math.random() * 600);
+        }
+        
+        // Handle ongoing rain
+        if (this.isRaining) {
+            this.rainDuration--;
+            if (this.rainDuration <= 0) {
+                this.stopRain();
+            }
+        }
+    }
+    
+    // Start rain event
+    startRain() {
+        this.isRaining = true;
+        this.rainDuration = 300 + Math.floor(Math.random() * 300); // 5-10 seconds of rain
+        this.initRain();
+        
+        // Add visual feedback to canvas container
+        const canvasContainer = this.canvas.parentElement;
+        if (canvasContainer && canvasContainer.classList.contains('canvas-container')) {
+            canvasContainer.classList.add('raining');
+        }
+        
+        // Show rain notification
+        this.showRainNotification();
+        
+        // Update all characters for rain
+        this.characters.forEach(char => {
+            // Store pre-rain state
+            char.preRainAnimation = char.currentAnimation;
+            char.preRainSpeed = char.speed;
+            
+            // Stop walking and switch to umbrella if idle
+            if (char.currentAnimation === 'idle' || char.isIdle) {
+                char.currentAnimation = 'umbrella';
+            }
+            
+            // Stop all movement during rain
+            char.speed = 0;
+            char.isWalkingInRain = false;
+        });
+        
+        console.log('🌧️ Rain started! Duration:', this.rainDuration / 60, 'seconds');
+    }
+    
+    // Stop rain event
+    stopRain() {
+        this.isRaining = false;
+        this.rainParticles = [];
+        
+        // Remove visual feedback from canvas container
+        const canvasContainer = this.canvas.parentElement;
+        if (canvasContainer && canvasContainer.classList.contains('canvas-container')) {
+            canvasContainer.classList.remove('raining');
+        }
+        
+        // Hide rain notification
+        this.hideRainNotification();
+        
+        // Restore character states
+        this.characters.forEach(char => {
+            // Only restore if not stunned or flying
+            if (!char.isStunned && !char.isFlying && !char.isDragging) {
+                if (char.currentAnimation === 'umbrella') {
+                    char.currentAnimation = char.isIdle ? 'idle' : 'walk';
+                }
+                
+                // Restore movement speed
+                if (!char.isIdle) {
+                    char.speed = char.originalSpeed;
+                }
+            }
+        });
+        
+        console.log('☀️ Rain stopped!');
+    }
+    
+    // Show rain notification
+    showRainNotification() {
+        // Check if notification already exists
+        let notification = document.getElementById('rainNotification');
+        
+        if (!notification) {
+            // Create notification element
+            notification = document.createElement('div');
+            notification.id = 'rainNotification';
+            notification.className = 'rain-notification';
+            notification.textContent = 'It\'s raining! Characters are taking shelter with umbrellas ☔';
+            document.body.appendChild(notification);
+        }
+        
+        // Show notification with animation
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 100);
+        
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
+    }
+    
+    // Hide rain notification
+    hideRainNotification() {
+        const notification = document.getElementById('rainNotification');
+        if (notification) {
+            notification.classList.remove('show');
+            // Remove element after animation completes
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 500);
+        }
     }
     
     // Draw stones
@@ -566,6 +775,31 @@ class CharacterAnimationSystem {
         this.characters.forEach(char => {
             // Skip updates for dragged characters (except flash effect)
             if (char.isDragging) {
+                return;
+            }
+            
+            // Handle rain state - characters stop and use umbrellas
+            if (this.isRaining && !char.isStunned && !char.isFlying) {
+                // Ensure characters stay still during rain
+                char.speed = 0;
+                
+                // Switch idle characters to umbrella animation
+                if (char.isIdle || char.currentAnimation === 'idle') {
+                    char.currentAnimation = 'umbrella';
+                } else if (char.currentAnimation === 'walk') {
+                    // Walking characters become idle with umbrella
+                    char.currentAnimation = 'umbrella';
+                    char.isIdle = true;
+                }
+                
+                // Update frame animation for umbrella
+                char.frameTimer++;
+                if (char.frameTimer >= char.frameDelay) {
+                    char.frameTimer = 0;
+                    char.currentFrame = (char.currentFrame + 1) % this.spriteConfig.animations[char.currentAnimation].frameCount;
+                }
+                
+                // Skip normal movement logic during rain
                 return;
             }
             
@@ -618,8 +852,8 @@ class CharacterAnimationSystem {
                 }
             }
             
-            // Random animation system (only if not stunned)
-            if (!char.isStunned) {
+            // Random animation system (only if not stunned and not raining)
+            if (!char.isStunned && !this.isRaining) {
                 this.handleRandomAnimations(char);
             }
             
@@ -630,8 +864,8 @@ class CharacterAnimationSystem {
                 char.currentFrame = (char.currentFrame + 1) % this.spriteConfig.animations[char.currentAnimation].frameCount;
             }
             
-            // Handle jumping (only if not stunned)
-            if (char.isJumping && !char.isStunned) {
+            // Handle jumping (only if not stunned and not raining)
+            if (char.isJumping && !char.isStunned && !this.isRaining) {
                 char.jumpHeight += char.jumpVelocity;
                 char.jumpVelocity += 0.4; // Gravity (reduced for higher jumps)
                 
@@ -646,8 +880,8 @@ class CharacterAnimationSystem {
                         char.currentAnimation = 'walk';
                     }
                 }
-            } else if (!char.isStunned) {
-                // Check for stone collision ahead (only if not stunned)
+            } else if (!char.isStunned && !this.isRaining) {
+                // Check for stone collision ahead (only if not stunned and not raining)
                 const charCenterX = char.x + (this.spriteConfig.frameWidth * char.scale) / 2;
                 const lookAheadDistance = 20;
                 
@@ -672,8 +906,8 @@ class CharacterAnimationSystem {
                 });
             }
             
-            // Move character (only if not stunned and not idle)
-            if (!char.isStunned && !char.isIdle) {
+            // Move character (only if not stunned, not idle, and not raining)
+            if (!char.isStunned && !char.isIdle && !this.isRaining) {
                 char.x += char.speed * char.direction;
                 
                 // Bounce off edges
@@ -974,8 +1208,38 @@ function initCharacterAnimation() {
     characterAnimSystem.init();
 }
 
+// Manual rain trigger for testing (can be called from console)
+function triggerRain() {
+    if (characterAnimSystem && !characterAnimSystem.isRaining) {
+        characterAnimSystem.startRain();
+        console.log('🌧️ Rain manually triggered!');
+    } else if (characterAnimSystem && characterAnimSystem.isRaining) {
+        console.log('☔ It\'s already raining!');
+    } else {
+        console.log('❌ Animation system not initialized');
+    }
+}
+
+// Stop rain manually (for testing)
+function stopRain() {
+    if (characterAnimSystem && characterAnimSystem.isRaining) {
+        characterAnimSystem.stopRain();
+        console.log('☀️ Rain manually stopped!');
+    } else if (characterAnimSystem && !characterAnimSystem.isRaining) {
+        console.log('☀️ It\'s not raining!');
+    } else {
+        console.log('❌ Animation system not initialized');
+    }
+}
+
 // Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { CharacterAnimationSystem, initCharacterAnimation };
+    module.exports = { CharacterAnimationSystem, initCharacterAnimation, triggerRain, stopRain };
+}
+
+// Make functions available globally for testing
+if (typeof window !== 'undefined') {
+    window.triggerRain = triggerRain;
+    window.stopRain = stopRain;
 }
 
