@@ -12,7 +12,7 @@ An interactive web-based game for learning Mandarin Chinese vocabulary with cute
 
 ### 🐱 Cute Animal Friends
 Features adorable animals with personalities including:
--🐰 Bunny Characters
+- 🐰 Bunny Characters
 Very Energetic (0.8-1.0): Fast movement, frequent activity
 Very Curious (0.7-1.0): Often change direction, explore
 Very Playful (0.8-1.0): Jump frequently, bouncy behavior
