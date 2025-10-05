@@ -76,8 +76,8 @@ class CharacterAnimationSystem {
         // Generate random stones
         // this.generateStones(3);
         
-        // Create 5 random characters
-        await this.createRandomCharacters(5);
+        // Create characters from collected characters
+        await this.createCollectedCharacters();
         
         // Start animation
         this.start();
@@ -310,17 +310,35 @@ class CharacterAnimationSystem {
         this.stones.sort((a, b) => a.x - b.x);
     }
     
-    // Create random characters
-    async createRandomCharacters(count) {
+    // Create characters from collected characters
+    async createCollectedCharacters() {
         const promises = [];
         
-        for (let i = 0; i < count; i++) {
-            // Random animal type
-            const animalType = this.animalTypes[Math.floor(Math.random() * this.animalTypes.length)];
+        // Check if collectedCharacters exists and has items
+        if (!window.collectedCharacters || window.collectedCharacters.length === 0) {
+            // Show no characters message if no characters collected
+            const noCharactersMessage = document.getElementById('noCharactersMessage');
+            if (noCharactersMessage) {
+                noCharactersMessage.style.display = 'block';
+            }
+            return;
+        }
+        
+        // Hide no characters message
+        const noCharactersMessage = document.getElementById('noCharactersMessage');
+        if (noCharactersMessage) {
+            noCharactersMessage.style.display = 'none';
+        }
+        
+        // Limit to maximum 5 characters for performance
+        const charactersToShow = window.collectedCharacters.slice(0, 5);
+        
+        for (let i = 0; i < charactersToShow.length; i++) {
+            const collectedChar = charactersToShow[i];
             
-            // Random character variation (1-15)
-            const charNum = Math.floor(Math.random() * this.characterVariations) + 1;
-            const charVariation = String(charNum).padStart(2, '0');
+            // Parse character info from collected character
+            const animalType = collectedChar.type;
+            const charVariation = String(collectedChar.number).padStart(2, '0');
             
             // Build sprite path
             const spritePath = `spritesheets/${animalType}/${animalType}_Character${charVariation}.png`;
@@ -370,7 +388,9 @@ class CharacterAnimationSystem {
                 lastIdleTime: 0,
                 lastJumpTime: 0,
                 // Pre-assigned personality
-                personality: personality
+                personality: personality,
+                // Store collected character info
+                collectedInfo: collectedChar
             };
             
             // Load sprite image

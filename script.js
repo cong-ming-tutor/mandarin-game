@@ -47,6 +47,11 @@ let gameState = {
     totalQuestions: 0
 };
 
+// Global collected characters array
+if (!window.collectedCharacters) {
+    window.collectedCharacters = JSON.parse(localStorage.getItem('collectedCharacters') || '[]');
+}
+
 // TTS system
 const ttsSystem = {
     enabled: true,
@@ -104,7 +109,7 @@ const ttsSystem = {
 };
 
 // Sound system
-const soundSystem = {
+window.soundSystem = {
     audioContext: null,
     sounds: {},
     enabled: true,
@@ -153,11 +158,20 @@ const soundSystem = {
         // Suara kegagalan - nada turun untuk skor rendah (<50)
         this.sounds.failure = this.createTone([440, 392, 349, 294], [0.3, 0.3, 0.3, 0.5], 0.7);
         
-        // Suara reward - magical chime untuk mendapat hewan
-        this.sounds.reward = this.createTone([523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98], [0.2, 0.2, 0.2, 0.3, 0.3, 0.4], 0.9);
+        // Suara reward - magical chime untuk mendapat hewan (enhanced)
+        this.sounds.reward = this.createMagicalRewardSound();
         
-        // Suara slot machine - spinning sound untuk countdown reward
-        this.sounds.slot = this.createTone([200, 300, 400, 500, 600, 700, 800, 900, 1000], [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.2], 0.4);
+        // Suara slot machine - spinning sound untuk countdown reward (enhanced)
+        this.sounds.slot = this.createSlotMachineSound();
+        
+        // Suara slot speed - dynamic sound yang berubah dengan kecepatan
+        this.sounds.slotSpeed = this.createSlotSpeedSound();
+        
+        // Suara reveal - special effect saat karakter terungkap
+        this.sounds.reveal = this.createRevealSound();
+        
+        // Suara collect - enhanced feedback untuk tombol collect
+        this.sounds.collect = this.createCollectSound();
     },
     
     createTone(frequencies, durations, volume = 0.5) {
@@ -184,9 +198,254 @@ const soundSystem = {
         };
     },
     
-    play(soundName) {
+    createMagicalRewardSound() {
+        return () => {
+            if (!this.enabled || !this.audioContext) return;
+            
+            const now = this.audioContext.currentTime;
+            
+            // Main magical chime sequence
+            const mainFreqs = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 1760.00];
+            const mainDurations = [0.3, 0.25, 0.25, 0.3, 0.3, 0.4, 0.5];
+            
+            mainFreqs.forEach((freq, index) => {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(freq, now + index * 0.15);
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0, now + index * 0.15);
+                gainNode.gain.linearRampToValueAtTime(0.4, now + index * 0.15 + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + index * 0.15 + mainDurations[index]);
+                
+                oscillator.start(now + index * 0.15);
+                oscillator.stop(now + index * 0.15 + mainDurations[index]);
+            });
+            
+            // Add sparkle effect with higher frequencies
+            setTimeout(() => {
+                const sparkleFreqs = [2000, 2500, 3000, 3500, 4000];
+                sparkleFreqs.forEach((freq, index) => {
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                    oscillator.type = 'triangle';
+                    
+                    gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0.1, this.audioContext.currentTime + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.2);
+                    
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + 0.2);
+                });
+            }, 500);
+        };
+    },
+    
+    createSlotMachineSound() {
+        return () => {
+            if (!this.enabled || !this.audioContext) return;
+            
+            const now = this.audioContext.currentTime;
+            
+            // Create mechanical spinning sound with multiple layers
+            const baseFreqs = [150, 200, 250, 300, 350, 400, 450, 500];
+            const durations = [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.1];
+            
+            baseFreqs.forEach((freq, index) => {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                const filter = this.audioContext.createBiquadFilter();
+                
+                oscillator.connect(filter);
+                filter.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(freq, now + index * 0.08);
+                oscillator.type = 'sawtooth';
+                
+                // Add filter for mechanical sound
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(800, now + index * 0.08);
+                
+                gainNode.gain.setValueAtTime(0, now + index * 0.08);
+                gainNode.gain.linearRampToValueAtTime(0.2, now + index * 0.08 + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + index * 0.08 + durations[index]);
+                
+                oscillator.start(now + index * 0.08);
+                oscillator.stop(now + index * 0.08 + durations[index]);
+            });
+            
+            // Add mechanical click sounds
+            setTimeout(() => {
+                for (let i = 0; i < 3; i++) {
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(800 + i * 100, this.audioContext.currentTime);
+                    oscillator.type = 'square';
+                    
+                    gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0.1, this.audioContext.currentTime + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.05);
+                    
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + 0.05);
+                }
+            }, 200);
+        };
+    },
+    
+    createSlotSpeedSound() {
+        return (speed = 1) => {
+            if (!this.enabled || !this.audioContext) return;
+            
+            const now = this.audioContext.currentTime;
+            const baseFreq = 200 + (speed * 100); // Higher speed = higher frequency
+            const volume = 0.1 + (speed * 0.1); // Higher speed = louder
+            
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            const filter = this.audioContext.createBiquadFilter();
+            
+            oscillator.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(baseFreq, now);
+            oscillator.type = 'sawtooth';
+            
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(600 + (speed * 200), now);
+            
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(volume, now + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+            
+            oscillator.start(now);
+            oscillator.stop(now + 0.1);
+        };
+    },
+    
+    createRevealSound() {
+        return () => {
+            if (!this.enabled || !this.audioContext) return;
+            
+            const now = this.audioContext.currentTime;
+            
+            // Magical reveal sound with ascending frequencies
+            const revealFreqs = [392.00, 523.25, 659.25, 783.99, 1046.50];
+            const durations = [0.2, 0.2, 0.2, 0.3, 0.4];
+            
+            revealFreqs.forEach((freq, index) => {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(freq, now + index * 0.1);
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0, now + index * 0.1);
+                gainNode.gain.linearRampToValueAtTime(0.3, now + index * 0.1 + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + index * 0.1 + durations[index]);
+                
+                oscillator.start(now + index * 0.1);
+                oscillator.stop(now + index * 0.1 + durations[index]);
+            });
+            
+            // Add magical sparkle
+            setTimeout(() => {
+                const sparkleFreqs = [1500, 2000, 2500, 3000];
+                sparkleFreqs.forEach((freq, index) => {
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                    oscillator.type = 'triangle';
+                    
+                    gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0.08, this.audioContext.currentTime + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.15);
+                    
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + 0.15);
+                });
+            }, 300);
+        };
+    },
+    
+    createCollectSound() {
+        return () => {
+            if (!this.enabled || !this.audioContext) return;
+            
+            const now = this.audioContext.currentTime;
+            
+            // Satisfying collect sound with multiple layers
+            const collectFreqs = [523.25, 659.25, 783.99, 1046.50];
+            const durations = [0.15, 0.15, 0.2, 0.25];
+            
+            collectFreqs.forEach((freq, index) => {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(freq, now + index * 0.05);
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0, now + index * 0.05);
+                gainNode.gain.linearRampToValueAtTime(0.4, now + index * 0.05 + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + index * 0.05 + durations[index]);
+                
+                oscillator.start(now + index * 0.05);
+                oscillator.stop(now + index * 0.05 + durations[index]);
+            });
+            
+            // Add satisfying click
+            setTimeout(() => {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(1200, this.audioContext.currentTime);
+                oscillator.type = 'square';
+                
+                gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.2, this.audioContext.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.08);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + 0.08);
+            }, 200);
+        };
+    },
+    
+    play(soundName, parameter = null) {
         if (this.sounds[soundName]) {
-            this.sounds[soundName]();
+            if (parameter !== null) {
+                this.sounds[soundName](parameter);
+            } else {
+                this.sounds[soundName]();
+            }
         }
     },
     
@@ -213,7 +472,7 @@ const ttsToggleGame = document.getElementById('ttsToggleGame');
 
 // Initialize the game
 document.addEventListener('DOMContentLoaded', function() {
-    soundSystem.init();
+    window.window.soundSystem.init();
     ttsSystem.initTTS();
     initializeEventListeners();
     showRandomEmoji();
@@ -228,7 +487,7 @@ function initializeEventListeners() {
     // Game mode buttons
     document.querySelectorAll('.game-mode-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            soundSystem.play('click');
+            window.window.soundSystem.play('click');
             const mode = this.getAttribute('data-mode');
             startGame(mode);
         });
@@ -236,21 +495,21 @@ function initializeEventListeners() {
 
     // Navigation buttons
     document.getElementById('backBtn').addEventListener('click', function() {
-        soundSystem.play('click');
+        window.soundSystem.play('click');
         showMenu();
     });
     document.getElementById('playAgainBtn').addEventListener('click', function() {
-        soundSystem.play('click');
+        window.soundSystem.play('click');
         startGame(gameState.currentMode);
     });
     document.getElementById('menuBtn').addEventListener('click', function() {
-        soundSystem.play('click');
+        window.soundSystem.play('click');
         showMenu();
     });
     
     // Tombol toggle suara
     soundToggle.addEventListener('click', function() {
-        const isEnabled = soundSystem.toggle();
+        const isEnabled = window.soundSystem.toggle();
         this.textContent = isEnabled ? '🔊' : '🔇';
         this.title = isEnabled ? 'Efek Suara Aktif' : 'Efek Suara Mati';
     });
@@ -437,7 +696,7 @@ function checkMatch() {
     
     if (matchingWord) {
         // Correct match
-        soundSystem.play('match');
+        window.soundSystem.play('match');
         selectedCards.forEach(card => {
             card.classList.add('correct');
             card.classList.remove('selected');
@@ -450,7 +709,7 @@ function checkMatch() {
         showRandomEmoji();
     } else {
         // Incorrect match
-        soundSystem.play('incorrect');
+        window.soundSystem.play('incorrect');
         selectedCards.forEach(card => {
             card.classList.add('incorrect');
             setTimeout(() => {
@@ -475,7 +734,7 @@ function checkMatch() {
         setTimeout(() => {
             if (gameState.level < 3) {
                 gameState.level++;
-                soundSystem.play('levelUp');
+                window.soundSystem.play('levelUp');
                 initMatchingGame();
             } else {
                 endGame();
@@ -547,13 +806,13 @@ function handleQuizAnswer(event) {
     });
     
     if (isCorrect) {
-        soundSystem.play('correct');
+        window.soundSystem.play('correct');
         gameState.score += 10;
         gameState.correctAnswers++;
         showEncouragement();
         showRandomEmoji();
     } else {
-        soundSystem.play('incorrect');
+        window.soundSystem.play('incorrect');
         gameState.lives--;
         if (gameState.lives <= 0) {
             setTimeout(endGame, 1500);
@@ -617,7 +876,7 @@ function handleMemoryCardClick(event) {
     }
     
     // Balik kartu
-    soundSystem.play('flip');
+    window.soundSystem.play('flip');
     card.classList.add('flipped');
     card.querySelector('.card-back').style.display = 'none';
     card.querySelector('.card-front').style.display = 'block';
@@ -638,7 +897,7 @@ function checkMemoryMatch() {
     
     if (word1 === word2 && type1 !== type2) {
         // Match found
-        soundSystem.play('match');
+        window.soundSystem.play('match');
         card1.classList.add('matched');
         card2.classList.add('matched');
         gameState.score += 15;
@@ -651,7 +910,7 @@ function checkMemoryMatch() {
         }
     } else {
         // No match
-        soundSystem.play('incorrect');
+        window.soundSystem.play('incorrect');
         card1.classList.remove('flipped');
         card2.classList.remove('flipped');
         card1.querySelector('.card-back').style.display = 'block';
@@ -706,7 +965,7 @@ function showTypingQuestion() {
         if (event.key === 'Enter') {
             checkTypingAnswer();
         } else {
-            soundSystem.play('typing');
+            window.soundSystem.play('typing');
         }
     });
     
@@ -726,14 +985,14 @@ function checkTypingAnswer() {
     input.disabled = true;
     
     if (userAnswer === correctAnswer) {
-        soundSystem.play('correct');
+        window.soundSystem.play('correct');
         gameState.score += 15;
         gameState.correctAnswers++;
         input.style.background = 'linear-gradient(145deg, #a8edea 0%, #fed6e3 100%)';
         showEncouragement();
         showRandomEmoji();
     } else {
-        soundSystem.play('incorrect');
+        window.soundSystem.play('incorrect');
         gameState.lives--;
         input.style.background = 'linear-gradient(145deg, #ff9a9e 0%, #fecfef 100%)';
         input.value = `Benar: ${gameState.gameWords[gameState.currentQuestionIndex].pinyin}`;
@@ -776,11 +1035,11 @@ function shuffleArray(array) {
 function endGame() {
     // Play appropriate sound based on score
     if (gameState.score > 70) {
-        soundSystem.play('celebration'); // Cheers and applause for high score
+        window.soundSystem.play('celebration'); // Cheers and applause for high score
     } else if (gameState.score >= 50) {
-        soundSystem.play('confetti'); // Confetti and cheers for medium score
+        window.soundSystem.play('confetti'); // Confetti and cheers for medium score
     } else {
-        soundSystem.play('failure'); // Failure sound for low score
+        window.soundSystem.play('failure'); // Failure sound for low score
     }
     
     gameScreen.style.display = 'none';
@@ -788,6 +1047,13 @@ function endGame() {
     
     document.getElementById('finalScore').textContent = gameState.score;
     document.getElementById('wordsLearned').textContent = gameState.correctAnswers;
+    
+    // Show reward if score > 50 and reward system is available
+    if (gameState.score > 50 && window.rewardSystem) {
+        setTimeout(() => {
+            window.rewardSystem.showReward(gameState.score);
+        }, 1000); // Show reward after 1 second delay
+    }
 }
 
 
@@ -814,7 +1080,7 @@ function createConfetti() {
 
 // Show animal information when clicked
 function showAnimalInfo(animalKey, animal) {
-    soundSystem.play('click');
+    window.soundSystem.play('click');
     
     // Create a temporary info popup
     const popup = document.createElement('div');
@@ -869,7 +1135,7 @@ function showAnimalInfo(animalKey, animal) {
     `;
     
     closeBtn.addEventListener('click', () => {
-        soundSystem.play('click');
+        window.soundSystem.play('click');
         popup.remove();
     });
     
